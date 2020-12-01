@@ -1,0 +1,56 @@
+from socket import *
+import threading
+import time
+from tkinter import *
+
+wi=Tk() 
+
+#give title to window
+wi.title("DesktopChatApp")
+
+#set window size
+wi.geometry('420x600')
+
+s=socket()
+s.connect(('127.0.0.1',55555))
+
+global i_pos
+i_pos=4
+def clicked():
+    global i_pos
+    res="you: "+txt.get()
+    send_to_server(str(res))
+    lbl= Label(wi,text=res,anchor="e")
+    lbl.grid(sticky="W",column=0, row=i_pos)
+    i_pos=i_pos+1
+    txt.delete(0, END)
+    
+btn = Button(wi, text="Send", command=clicked)
+btn.grid(column=1, row=0)
+
+#enter input in text area
+
+txt = Entry(wi,width=40)
+txt.grid(column=0, row=0)
+
+
+
+def send_to_server(s_input):
+            s_input=str(len(s_input)).zfill(2)+s_input
+            s.send(s_input.encode())
+
+    
+def recv_server_data():
+    global i_pos
+    while True:
+        length=(s.recv(2))
+        if length!=b'':
+            length=int(length)
+            data=s.recv(length).decode()
+            lbl= Label(wi,text=str(data),anchor="e")
+            lbl.grid(sticky="W",column=0, row=i_pos)
+            i_pos=i_pos+1
+        
+threading.Thread(target=recv_server_data).start()
+#puts wndow in loop until closed.
+wi.mainloop()
