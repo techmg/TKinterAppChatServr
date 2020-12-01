@@ -1,0 +1,52 @@
+from socket import *
+import threading
+
+def recv_client_data(x):
+    global conn
+    while True:
+        try:
+            length=(x.recv(2))
+        except ConnectionResetError:
+          print("INFO: Connection closed by peer",x.getpeername())
+          x.close()
+          conn.remove(x)
+          return 0
+        except:
+          print("INFO: Something else went wrong")
+          x.close()
+          conn.remove(x)
+          return 0
+        if length==b'':
+            continue
+        length=int(length)
+        data=x.recv(length).decode()
+        msgi="Message : Client#"+str(x.getpeername())+"# "+data
+        print(msgi)
+        msgi=str(len(msgi)).zfill(2)+msgi
+        for h in conn:
+            try:
+                if h==x:
+                    continue
+                h.send(msgi.encode())
+            except:
+                print("INFO: Something went wrong")
+                h.close()
+                conn.remove(h)
+                
+        
+print("#######TCP CHAT LOGGER########")
+s=socket()
+s.bind(('127.0.0.1',55555))
+print('\nINFO: Listening on ip: 127.0.0.1 port',55555)
+s.listen(3)
+
+conn=list()
+global c
+
+while True:
+    c,a=s.accept()
+    conn.append(c)
+    print('INFO: ',a[0],':',a[1],'got connected')
+    print('INFO: ',len(conn),'live connection')
+    threading.Thread(target=recv_client_data, args=(c,)).start()
+    
